@@ -1,0 +1,61 @@
+
+仓库制作
+1.安装可用的 zabbix repo 和 Redhat/Centos repo
+#curl -o /etc/yum.repos.d/CentOS-Base.repo https://mirrors.aliyun.com/repo/Centos-7.repo
+注意 repo 有可能失效。注意检查网络路径，及时修改替换
+2. #yum install zabbix-server-mysql zabbix-agent mariadb-server --downloadonly --downloaddir=/tmp/offline_rpm
+3. #yum install centos-release-scl --downloadonly --downloaddir=/tmp/offline_rpm
+4. #yum install centos-release-scl
+5.编辑配置文件 /etc/yum.repos.d/zabbix.repo and enable zabbix-frontend repository.
+[zabbix-frontend]
+enabled=1
+6. #yum install zabbix-web-mysql-scl zabbix-apache-conf-scl --downloadonly --downloaddir=/tmp/offline_rpm
+7. #yum install createrepo
+8.#create /tmp/offline_rpm
+9.#vi /tmp/zabbixoffline.repo
+[Zabbix]
+name=zabbix offline repo
+baseurl=file:///tmp/offline_rpm
+gpgcheck=0
+enabled=1
+离线环境安装
+1.将制作好的 repo 文件和仓库文件上传
+2． #cd /tmp
+3． #tar -zxvf zabbixoffline.gz
+4． #mv zabbixoffline.repo /etc/yum.repos.d/zabbixoffline.repo
+5． 展示 repolist
+#yum repolist
+6.关闭 SElinux 强制安全检查和防火墙
+#vi /etc/selinux/config
+SELINUX=disabled
+7． #systemctl disable firewalld
+8． #systemctl stop firewalld
+9． #mv zabbixoffline.repo /etc/yum
+10.安装所有包
+#yum install zabbix-server-mysql zabbix-agent mariadb-server zabbix-web-mysql-scl zabbix-apache-conf-scl
+11． #systemctl start mariadb12． #mysql_secure_installation
+13 . #mysql -uroot -p
+14.在数据库创建 zabbix 用户
+# mysql -uroot -p
+password
+mysql> create database zabbix character set utf8 collate utf8_bin;
+mysql> create user zabbix@localhost identified by 'password';
+mysql> grant all privileges on zabbix.* to zabbix@localhost;
+mysql> set global log_bin_trust_function_creators = 1;
+mysql> quit;
+15.初始化数据库
+#zcat /usr/share/doc/zabbix-server-mysql*/create.sql.gz | mysql -uzabbix -p zabbix ####（"-p zabbix"的密码来源
+于 SQL 语句）
+16.# mysql -uroot -p
+password
+mysql> set global log_bin_trust_function_creators = 0;
+mysql> quit;
+17.修改 zabbix 数据库相关配置
+vi /etc/zabbix/zabbix_server.conf
+DBPassword=password
+18.修改时区
+#vi /etc/opt/rh/rh-php72/php-fpm.d/zabbix.conf
+php_value[date.timezone] = Asia/Shanghai
+19.配置相关服务的开机自启动
+#systemctl restart zabbix-server zabbix-agent httpd rh-php72-php-fpm
+#systemctl enable zabbix-server zabbix-agent httpd rh-php72-php-fpm mariadb
