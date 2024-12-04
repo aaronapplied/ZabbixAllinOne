@@ -1,0 +1,5 @@
+[Zabbix]
+name=zabbix offline repo
+baseurl=file:///tmp/offline_rpm
+gpgcheck=0
+enabled=1
