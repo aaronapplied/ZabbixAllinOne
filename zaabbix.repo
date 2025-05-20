@@ -1,0 +1,5 @@
+[offlinezabbix]
+name=Offline Zabbix Repo
+baseurl=file:///root/zabbix
+enabled=1
+gpgcheck=0
